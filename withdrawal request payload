@@ -1,0 +1,6 @@
+{
+  "userId": "user1",
+  "amount": 3000,
+  "currency": "MYR",
+  "source": "principal" // or "bonus"
+}
