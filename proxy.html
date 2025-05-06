@@ -1,0 +1,46 @@
+const fs = require('fs');
+const path = require('path');
+
+// 模拟数据库（例子）
+let accounts = {
+  "user1": {
+    proxySigned: false,
+    proxyCode: null,
+    proxyName: null,
+    proxyPhotoURL: null,
+    proxyDate: null
+  }
+};
+
+// 接收委托书签署 POST
+app.post('/api/proxy', express.json({ limit: '2mb' }), (req, res) => {
+  const { userId, proxyName, faceBase64 } = req.body;
+  if (!userId || !proxyName || !faceBase64) {
+    return res.status(400).json({ error: "缺少字段 / Missing fields" });
+  }
+
+  // 生成唯一编码
+  const code = `AUTH-ATL-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`;
+
+  // 保存照片为文件
+  const base64Data = faceBase64.replace(/^data:image\/\w+;base64,/, '');
+  const filename = `${userId}_${code}.jpg`;
+  const filepath = path.join(__dirname, 'public/uploads', filename);
+  fs.writeFileSync(filepath, base64Data, 'base64');
+
+  // 更新账户记录（模拟）
+  if (!accounts[userId]) accounts[userId] = {};
+  accounts[userId].proxySigned = true;
+  accounts[userId].proxyCode = code;
+  accounts[userId].proxyName = proxyName;
+  accounts[userId].proxyPhotoURL = `/uploads/${filename}`;
+  accounts[userId].proxyDate = new Date();
+
+  console.log(`[✔] ${userId} 已提交委托书`);
+
+  res.json({
+    success: true,
+    code,
+    photo: accounts[userId].proxyPhotoURL
+  });
+});
