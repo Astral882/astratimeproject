@@ -1,0 +1,4 @@
+{
+  "success": false,
+  "error": "Old client can only withdraw 5000 MYR max per principal request."
+}
