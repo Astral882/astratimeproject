@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8" />
+  <title>我的账户 / My Account</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="container">
+    <h1>账户概览 / Account Dashboard</h1>
+
+    <p>账号状态 / Account Status:
+      <span id="statusLight">🟢 活跃 / Active</span>
+    </p>
+
+    <p>IP: <span id="ipArea">获取中...</span></p>
+
+    <h3>账户结构 / Account Structure</h3>
+    <ul>
+      <li>户口一 / Account 1 (Locked) 🔒：<span id="lockedFund">-</span> MYR</li>
+      <li>户口二 / Account 2 (Flexible)：<span id="flexibleFund">-</span> MYR</li>
+      <li>每日红利 / Daily Bonus：<span id="dailyBonus">-</span> MYR</li>
+      <li>额外红利 / Extra Bonus：<span id="extraBonus">-</span> MYR</li>
+      <li>佣金 / Commission：<span id="commission">-</span> MYR</li>
+      <li>罚款 / Penalty：<span id="penalty">-</span> MYR</li>
+    </ul>
+
+    <h3>USDT 汇率 / USDT Rate</h3>
+    <p>1 USDT = <span id="usdtRate">-</span> MYR</p>
+
+    <h3>签署状态 / Agreement Status</h3>
+    <p>国际公约 / Agreement:
+      <span id="agreementStatus">尚未签署 / Not Signed</span>
+      <a href="agreement.html" class="btn">签署 / Sign</a>
+    </p>
+    <p>委托书 / Proxy:
+      <span id="proxyStatus">尚未签署 / Not Signed</span>
+      <a href="proxy.html" class="btn">签署 / Sign</a>
+    </p>
+
+    <h3>提款操作 / Withdraw</h3>
+    <a href="withdraw.html" class="btn">申请提款 / Apply</a>
+    <a href="bind-wallet.html" class="btn">绑定 USDT 钱包 / Bind Wallet</a>
+
+    <div class="notice" style="margin-top:30px; background:#f4f4f4; padding:15px; border-radius:6px;">
+      <b>提款说明 / Withdrawal Notice</b><br>
+      • USDT 提款将在 <b>7 个工作日</b> 内到账<br>
+      • 马币提款将在 <b>11 个工作日</b> 内到账<br>
+      <small>USDT withdrawals within 7 business days, MYR within 11 business days.</small>
+    </div>
+  </div>
+
+  <script>
+    const userId = 'user1'; // 实际情况应从登录后端 session 获取
+
+    fetch(`/api/account/${userId}`)
+      .then(res => res.json())
+      .then(data => {
+        document.getElementById('lockedFund').innerText = data.lockedFund || '0.00';
+        document.getElementById('flexibleFund').innerText = data.flexibleFund || '0.00';
+        document.getElementById('dailyBonus').innerText = data.dailyBonus || '0.00';
+        document.getElementById('extraBonus').innerText = data.extraBonus || '0.00';
+        document.getElementById('commission').innerText = data.commission || '0.00';
+        document.getElementById('penalty').innerText = data.penalty || '0.00';
+
+        if (data.accountActive === false) {
+          document.getElementById('statusLight').innerText = '🔴 封锁 / Locked';
+        }
+
+        if (data.agreementSigned) {
+          document.getElementById('agreementStatus').innerText = `✅ 已签署 / Signed (${data.agreementCode})`;
+        }
+
+        if (data.proxySigned) {
+          document.getElementById('proxyStatus').innerText = `✅ 已签署 / Signed (${data.proxyCode})`;
+        }
+      });
+
+    // 获取客户端 IP（可改为后端实时提供）
+    fetch("https://ipapi.co/json/")
+      .then(res => res.json())
+      .then(ip => {
+        document.getElementById("ipArea").innerText = `${ip.ip} - ${ip.country_name} ${ip.region}`;
+      });
+
+    // 获取 USDT 汇率
+    fetch("/api/usdt-rate")
+      .then(res => res.json())
+      .then(data => {
+        document.getElementById("usdtRate").innerText = data.rate.toFixed(2);
+      });
+  </script>
+</body>
+</html>
