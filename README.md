@@ -1,109 +1,53 @@
-# Encode URL
+# es-set-tostringtag <sup>[![Version Badge][npm-version-svg]][package-url]</sup>
 
-Encode a URL to a percent-encoded form, excluding already-encoded sequences.
+[![github actions][actions-image]][actions-url]
+[![coverage][codecov-image]][codecov-url]
+[![License][license-image]][license-url]
+[![Downloads][downloads-image]][downloads-url]
 
-## Installation
+[![npm badge][npm-badge-png]][package-url]
 
-```sh
-npm install encodeurl
-```
+A helper to optimistically set Symbol.toStringTag, when possible.
 
-## API
-
+## Example
+Most common usage:
 ```js
-var encodeUrl = require('encodeurl')
+var assert = require('assert');
+var setToStringTag = require('es-set-tostringtag');
+
+var obj = {};
+
+assert.equal(Object.prototype.toString.call(obj), '[object Object]');
+
+setToStringTag(obj, 'tagged!');
+
+assert.equal(Object.prototype.toString.call(obj), '[object tagged!]');
 ```
 
-### encodeUrl(url)
+## Options
+An optional options argument can be provided as the third argument. The available options are:
 
-Encode a URL to a percent-encoded form, excluding already-encoded sequences.
+### `force`
+If the `force` option is set to `true`, the toStringTag will be set even if it is already set.
 
-This function accepts a URL and encodes all the non-URL code points (as UTF-8 byte sequences). It will not encode the "%" character unless it is not part of a valid sequence (`%20` will be left as-is, but `%foo` will be encoded as `%25foo`).
+### `nonConfigurable`
+If the `nonConfigurable` option is set to `true`, the toStringTag will be defined as non-configurable when possible.
 
-This encode is meant to be "safe" and does not throw errors. It will try as hard as it can to properly encode the given URL, including replacing any raw, unpaired surrogate pairs with the Unicode replacement character prior to encoding.
+## Tests
+Simply clone the repo, `npm install`, and run `npm test`
 
-## Examples
-
-### Encode a URL containing user-controlled data
-
-```js
-var encodeUrl = require('encodeurl')
-var escapeHtml = require('escape-html')
-
-http.createServer(function onRequest (req, res) {
-  // get encoded form of inbound url
-  var url = encodeUrl(req.url)
-
-  // create html message
-  var body = '<p>Location ' + escapeHtml(url) + ' not found</p>'
-
-  // send a 404
-  res.statusCode = 404
-  res.setHeader('Content-Type', 'text/html; charset=UTF-8')
-  res.setHeader('Content-Length', String(Buffer.byteLength(body, 'utf-8')))
-  res.end(body, 'utf-8')
-})
-```
-
-### Encode a URL for use in a header field
-
-```js
-var encodeUrl = require('encodeurl')
-var escapeHtml = require('escape-html')
-var url = require('url')
-
-http.createServer(function onRequest (req, res) {
-  // parse inbound url
-  var href = url.parse(req)
-
-  // set new host for redirect
-  href.host = 'localhost'
-  href.protocol = 'https:'
-  href.slashes = true
-
-  // create location header
-  var location = encodeUrl(url.format(href))
-
-  // create html message
-  var body = '<p>Redirecting to new site: ' + escapeHtml(location) + '</p>'
-
-  // send a 301
-  res.statusCode = 301
-  res.setHeader('Content-Type', 'text/html; charset=UTF-8')
-  res.setHeader('Content-Length', String(Buffer.byteLength(body, 'utf-8')))
-  res.setHeader('Location', location)
-  res.end(body, 'utf-8')
-})
-```
-
-## Similarities
-
-This function is _similar_ to the intrinsic function `encodeURI`. However, it will not encode:
-
-* The `\`, `^`, or `|` characters
-* The `%` character when it's part of a valid sequence
-* `[` and `]` (for IPv6 hostnames)
-* Replaces raw, unpaired surrogate pairs with the Unicode replacement character
-
-As a result, the encoding aligns closely with the behavior in the [WHATWG URL specification][whatwg-url]. However, this package only encodes strings and does not do any URL parsing or formatting.
-
-It is expected that any output from `new URL(url)` will not change when used with this package, as the output has already been encoded. Additionally, if we were to encode before `new URL(url)`, we do not expect the before and after encoded formats to be parsed any differently.
-
-## Testing
-
-```sh
-$ npm test
-$ npm run lint
-```
-
-## References
-
-- [RFC 3986: Uniform Resource Identifier (URI): Generic Syntax][rfc-3986]
-- [WHATWG URL Living Standard][whatwg-url]
-
-[rfc-3986]: https://tools.ietf.org/html/rfc3986
-[whatwg-url]: https://url.spec.whatwg.org/
-
-## License
-
-[MIT](LICENSE)
+[package-url]: https://npmjs.com/package/es-set-tostringtag
+[npm-version-svg]: https://versionbadg.es/es-shims/es-set-tostringtag.svg
+[deps-svg]: https://david-dm.org/es-shims/es-set-tostringtag.svg
+[deps-url]: https://david-dm.org/es-shims/es-set-tostringtag
+[dev-deps-svg]: https://david-dm.org/es-shims/es-set-tostringtag/dev-status.svg
+[dev-deps-url]: https://david-dm.org/es-shims/es-set-tostringtag#info=devDependencies
+[npm-badge-png]: https://nodei.co/npm/es-set-tostringtag.png?downloads=true&stars=true
+[license-image]: https://img.shields.io/npm/l/es-set-tostringtag.svg
+[license-url]: LICENSE
+[downloads-image]: https://img.shields.io/npm/dm/es-set-tostringtag.svg
+[downloads-url]: https://npm-stat.com/charts.html?package=es-set-tostringtag
+[codecov-image]: https://codecov.io/gh/es-shims/es-set-tostringtag/branch/main/graphs/badge.svg
+[codecov-url]: https://app.codecov.io/gh/es-shims/es-set-tostringtag/
+[actions-image]: https://img.shields.io/endpoint?url=https://github-actions-badge-u3jn4tfpocch.runkit.sh/es-shims/es-set-tostringtag
+[actions-url]: https://github.com/es-shims/es-set-tostringtag/actions

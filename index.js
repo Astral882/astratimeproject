@@ -1,78 +1,85 @@
-/*!
- * escape-html
- * Copyright(c) 2012-2013 TJ Holowaychuk
- * Copyright(c) 2015 Andreas Lubbe
- * Copyright(c) 2015 Tiancheng "Timothy" Gu
- * MIT Licensed
- */
-
 'use strict';
 
-/**
- * Module variables.
- * @private
- */
+var test = require('tape');
+var hasToStringTag = require('has-tostringtag/shams')();
+var hasOwn = require('hasown');
 
-var matchHtmlRegExp = /["'&<>]/;
+var setToStringTag = require('../');
 
-/**
- * Module exports.
- * @public
- */
+test('setToStringTag', function (t) {
+	t.equal(typeof setToStringTag, 'function', 'is a function');
 
-module.exports = escapeHtml;
+	/** @type {{ [Symbol.toStringTag]?: typeof sentinel }} */
+	var obj = {};
+	var sentinel = {};
 
-/**
- * Escape special characters in the given string of html.
- *
- * @param  {string} string The string to escape for inserting into HTML
- * @return {string}
- * @public
- */
+	setToStringTag(obj, sentinel);
 
-function escapeHtml(string) {
-  var str = '' + string;
-  var match = matchHtmlRegExp.exec(str);
+	t['throws'](
+		// @ts-expect-error
+		function () { setToStringTag(obj, sentinel, { force: 'yes' }); },
+		TypeError,
+		'throws if options is not an object'
+	);
 
-  if (!match) {
-    return str;
-  }
+	t.test('has Symbol.toStringTag', { skip: !hasToStringTag }, function (st) {
+		st.ok(hasOwn(obj, Symbol.toStringTag), 'has toStringTag property');
 
-  var escape;
-  var html = '';
-  var index = 0;
-  var lastIndex = 0;
+		st.equal(obj[Symbol.toStringTag], sentinel, 'toStringTag property is as expected');
 
-  for (index = match.index; index < str.length; index++) {
-    switch (str.charCodeAt(index)) {
-      case 34: // "
-        escape = '&quot;';
-        break;
-      case 38: // &
-        escape = '&amp;';
-        break;
-      case 39: // '
-        escape = '&#39;';
-        break;
-      case 60: // <
-        escape = '&lt;';
-        break;
-      case 62: // >
-        escape = '&gt;';
-        break;
-      default:
-        continue;
-    }
+		st.equal(String(obj), '[object Object]', 'toStringTag works');
 
-    if (lastIndex !== index) {
-      html += str.substring(lastIndex, index);
-    }
+		/** @type {{ [Symbol.toStringTag]?: string }} */
+		var tagged = {};
+		tagged[Symbol.toStringTag] = 'already tagged';
+		st.equal(String(tagged), '[object already tagged]', 'toStringTag works');
 
-    lastIndex = index + 1;
-    html += escape;
-  }
+		setToStringTag(tagged, 'new tag');
+		st.equal(String(tagged), '[object already tagged]', 'toStringTag is unchanged');
 
-  return lastIndex !== index
-    ? html + str.substring(lastIndex, index)
-    : html;
-}
+		setToStringTag(tagged, 'new tag', { force: true });
+		st.equal(String(tagged), '[object new tag]', 'toStringTag is changed with force: true');
+
+		st.deepEqual(
+			Object.getOwnPropertyDescriptor(tagged, Symbol.toStringTag),
+			{
+				configurable: true,
+				enumerable: false,
+				value: 'new tag',
+				writable: false
+			},
+			'has expected property descriptor'
+		);
+
+		setToStringTag(tagged, 'new tag', { force: true, nonConfigurable: true });
+		st.deepEqual(
+			Object.getOwnPropertyDescriptor(tagged, Symbol.toStringTag),
+			{
+				configurable: false,
+				enumerable: false,
+				value: 'new tag',
+				writable: false
+			},
+			'is nonconfigurable'
+		);
+
+		st.end();
+	});
+
+	t.test('does not have Symbol.toStringTag', { skip: hasToStringTag }, function (st) {
+		var passed = true;
+		for (var key in obj) { // eslint-disable-line no-restricted-syntax
+			if (hasOwn(obj, key)) {
+				st.fail('object has own key ' + key);
+				passed = false;
+			}
+		}
+		if (passed) {
+			st.ok(true, 'object has no enumerable own keys');
+		}
+
+		st.end();
+	});
+
+	t.end();
+});
